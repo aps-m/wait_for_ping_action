@@ -1,23 +1,23 @@
-name: 'The name of your action here'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+name: 'wait_for_ping_action'
+description: 'Check ping, wait for pingable'
+author: 'aps-m'
 
 # Add your action's branding here. This will appear on the GitHub Marketplace.
 branding:
-  icon: 'heart'
-  color: 'red'
+  icon: 'network'
+  color: 'orange'
 
 # Define your inputs here.
 inputs:
-  milliseconds:
-    description: 'Your input description here'
+  tries:
+    description: 'Number of ping tries'
     required: true
-    default: '1000'
+    default: 1
 
-# Define your outputs here.
-outputs:
-  time:
-    description: 'Your output description here'
+  host:
+    description: 'Host to ping'
+    required: true
+    default: 'localhost'
 
 runs:
   using: node20
