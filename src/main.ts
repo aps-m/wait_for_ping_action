@@ -2,55 +2,59 @@ import * as core from '@actions/core'
 import { wait } from './wait'
 import * as ping from 'ping'
 
+async function advancedPing(
+  targetHost: string,
+  maxTries: number
+): Promise<boolean> {
+  let timeoutHandle: ReturnType<typeof setTimeout> | undefined
+
+  try {
+    return await new Promise((resolve, reject) => {
+      timeoutHandle = setTimeout(() => {
+        reject(new Error('Timeout exceeded'))
+      }, maxTries * 1000)
+
+      void (async () => {
+        try {
+          for (let index = 0; index < maxTries; index++) {
+            const result = await ping.promise.probe(targetHost)
+
+            if (result.alive) {
+              resolve(true)
+              return
+            }
+
+            await wait(1000)
+          }
+
+          reject(new Error('All attempts failed'))
+        } catch (error) {
+          reject(error)
+        }
+      })()
+    })
+  } finally {
+    if (timeoutHandle) {
+      clearTimeout(timeoutHandle)
+    }
+  }
+}
+
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
  */
 export async function run(): Promise<void> {
   try {
-    const tries: number = Number(core.getInput('tries'))
-    const host: string = core.getInput('host')
+    const tries = Number(core.getInput('tries'))
+    const host = core.getInput('host')
 
-    async function advancedPing(host: string, tries: number): Promise<boolean> {
-      let timeOutHandle: NodeJS.Timeout
-
-      return new Promise((resolve, reject) => {
-        timeOutHandle = setTimeout(() => {
-          reject(new Error('Timeout exceeded'))
-        }, tries * 1000)
-        ;(async () => {
-          try {
-            for (let i = 0; i < tries; i++) {
-              const result = await ping.promise.probe(host)
-
-              if (result.alive) {
-                clearTimeout(timeOutHandle)
-                resolve(true)
-                return
-              }
-              await wait(1000)
-            }
-
-            clearTimeout(timeOutHandle)
-            reject(new Error('All attempts failed'))
-          } catch (error) {
-            clearTimeout(timeOutHandle)
-            reject(error)
-          }
-        })()
-      })
-    }
-
-    advancedPing(host, tries)
-      .then(() => {
-        console.log('Ping successful!')
-      })
-      .catch(error => {
-        console.error(`Ping failed, error: ${error.message}`)
-        core.setFailed(error.message)
-      })
+    await advancedPing(host, tries)
+    console.log('Ping successful!')
   } catch (error) {
-    // Fail the workflow run if an error occurs
-    if (error instanceof Error) core.setFailed(error.message)
+    if (error instanceof Error) {
+      console.error(`Ping failed, error: ${error.message}`)
+      core.setFailed(error.message)
+    }
   }
 }
