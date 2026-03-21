@@ -14,7 +14,7 @@
 ```yml
 - name: Wait for device to be pingable
   id: wait_for_ping
-  uses: aps-m/wait_for_ping_action@main
+  uses: aps-m/wait_for_ping_action@v1
   with:
     host: ${{ matrix.ip }}
     tries: 5
